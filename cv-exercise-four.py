@@ -20,7 +20,7 @@ def compute_harris_response(image, sigma=3):
 
 	return Wdet / Wtr;
 
-def get_harris_points(harrisImage, min_dist=50, threshold=0.2):
+def get_harris_points(harrisImage, min_dist=10, threshold=0.5):
 
 	corner_threshold = harrisImage.max() * threshold
 	harrisImage_t = (harrisImage > corner_threshold) * 1
@@ -35,7 +35,6 @@ def get_harris_points(harrisImage, min_dist=50, threshold=0.2):
 	allowed_locations[min_dist:-min_dist, min_dist:-min_dist] = 1
 
 	filtered_coords = [];
-
 
 	for i in index:
 		if allowed_locations[coords[i,0], coords[i,1]] == 1:
@@ -52,19 +51,32 @@ def plot_harris_points(image, filtered_coords):
 	plot([p[1] for p in filtered_coords], [p[0] for p in filtered_coords], '*')
 	axis('off')
 
+def plot_compare_points(image, filtered_coordsOne, filtered_coordsTwo):
+	figure()
+	gray()
+	imshow(image)
+	plot([p[1] for p in filtered_coordsOne], [p[0] for p in filtered_coordsOne], '*')
+	plot([p[1] for p in filtered_coordsTwo], [p[0] for p in filtered_coordsTwo], '-')
+	axis('off')
+
 image = array(Image.open('data/empire.jpg').convert('L'))
  
+sigma = 3
+
+imageX = zeros(image.shape)
+filters.gaussian_filter(image, (sigma, sigma), (0,1), imageX)
+
+imageY = zeros(image.shape)
+filters.gaussian_filter(image, (sigma, sigma), (1,0), imageY)
+
+magnitude = sqrt(imageX**2+imageY**2)
+magCoords = get_harris_points(magnitude)
+
 imageHarris = compute_harris_response(image)
-coords = get_harris_points(imageHarris)
+harrisCoords = get_harris_points(imageHarris)
 
-print(coords)
-
-plot_harris_points(imageHarris, coords)
-
-figure()
-imshow(image)
-
-figure()
-imshow(imageHarris)
+plot_harris_points(imageHarris, harrisCoords)
+plot_harris_points(magnitude, magCoords)
+plot_compare_points(image, harrisCoords, magCoords)
 
 show()
